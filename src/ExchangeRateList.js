@@ -6,18 +6,29 @@ class ExchangeRateList extends Component {
     this.state = {
       baseCurrency: 'EUR',
       rates: {},
+      currencies: {}, 
     };
   }
 
   componentDidMount() {
-    this.fetchRates(this.state.baseCurrency);
+    this.fetchCurrencies(); 
+    this.fetchRates(this.state.baseCurrency); 
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.baseCurrency !== this.state.baseCurrency) {
-      this.fetchRates(this.state.baseCurrency);
+      this.fetchRates(this.state.baseCurrency); 
     }
   }
+
+  fetchCurrencies = () => {
+    fetch('https://api.frankfurter.app/currencies')
+      .then((response) => response.json())
+      .then((data) => {
+        this.setState({ currencies: data });
+      })
+      .catch((error) => console.error('Error fetching currencies:', error));
+  };
 
   fetchRates = (base) => {
     fetch(`https://api.frankfurter.app/latest?from=${base}`)
@@ -33,20 +44,28 @@ class ExchangeRateList extends Component {
   };
 
   render() {
-    const { rates, baseCurrency } = this.state;
+    const { rates, baseCurrency, currencies } = this.state;
     return (
       <div>
         <h2>Exchange Rates for {baseCurrency}</h2>
-        <select onChange={this.handleBaseCurrencyChange}>
-          <option value="EUR">EUR</option>
-          <option value="USD">USD</option>
-          <option value="GBP">GBP</option>
-          {/* Add other currency options here */}
+
+        <label htmlFor="base-currency">Select Base Currency: </label>
+        <select
+          id="base-currency"
+          onChange={this.handleBaseCurrencyChange}
+          value={baseCurrency}
+        >
+          {Object.entries(currencies).map(([code, name]) => (
+            <option key={code} value={code}>
+              {name} ({code})
+            </option>
+          ))}
         </select>
+
         <ul>
           {Object.entries(rates).map(([currency, rate]) => (
             <li key={currency}>
-              {currency}: {rate.toFixed(2)}
+              {currency}: {rate.toFixed(4)}
             </li>
           ))}
         </ul>
